@@ -7,17 +7,17 @@ const API = "http://localhost:5000/api/auth";
 
 const inputStyle = {
   width: "100%", padding: "14px 44px 14px 16px",
-  background: "rgba(0,0,0,0.35)", border: "1px solid var(--glass-border)",
-  borderRadius: "10px", color: "var(--text)", fontSize: "15px",
-  outline: "none", transition: "border 0.3s",
+  background: "#fafafa", border: "1.5px solid var(--border)",
+  borderRadius: "10px", color: "var(--ink)", fontSize: "15px",
+  outline: "none", transition: "border 0.2s", fontFamily: "'Inter', sans-serif",
 };
 
 function Field({ label, name, type = "text", placeholder, value, onChange, error, showToggle, onToggle, isPassword }) {
   return (
-    <div style={{ marginBottom: "20px" }}>
+    <div style={{ marginBottom: "18px" }}>
       <label style={{
-        display: "block", color: "var(--muted)", fontSize: "13px",
-        letterSpacing: "0.08em", marginBottom: "8px", textTransform: "uppercase"
+        display: "block", color: "var(--ink)", fontSize: "13px",
+        fontWeight: 600, marginBottom: "8px",
       }}>
         {label}
       </label>
@@ -25,14 +25,14 @@ function Field({ label, name, type = "text", placeholder, value, onChange, error
         <input
           name={name} type={type} placeholder={placeholder}
           value={value} onChange={onChange}
-          style={{ ...inputStyle, borderColor: error ? "var(--error)" : "var(--glass-border)" }}
-          onFocus={e => e.target.style.borderColor = "var(--teal)"}
-          onBlur={e => e.target.style.borderColor = error ? "var(--error)" : "var(--glass-border)"}
+          style={{ ...inputStyle, borderColor: error ? "var(--error)" : "var(--border)" }}
+          onFocus={e => e.target.style.borderColor = "var(--ink)"}
+          onBlur={e => e.target.style.borderColor = error ? "var(--error)" : "var(--border)"}
         />
         {isPassword && (
           <span onClick={onToggle} style={{
             position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)",
-            cursor: "pointer", fontSize: "16px", color: "var(--muted)", userSelect: "none",
+            cursor: "pointer", fontSize: "16px", userSelect: "none",
           }}>
             {showToggle ? "🙈" : "👁️"}
           </span>
@@ -45,7 +45,7 @@ function Field({ label, name, type = "text", placeholder, value, onChange, error
 
 export default function Login() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState("login"); // "login" | "register"
+  const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ username: "", email: "", password: "", confirm: "" });
   const [errors, setErrors] = useState({});
   const [serverMsg, setServerMsg] = useState("");
@@ -53,7 +53,6 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // forgot password popup
   const [showForgot, setShowForgot] = useState(false);
   const [resetForm, setResetForm] = useState({ email: "", oldPassword: "", newPassword: "" });
   const [resetErrors, setResetErrors] = useState({});
@@ -138,36 +137,20 @@ export default function Login() {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: "radial-gradient(ellipse at 30% 40%, #003d3a 0%, #001a18 40%, #020c10 100%)",
-      position: "relative", overflow: "hidden", padding: "20px",
+      background: "#fafafa", padding: "20px",
     }}>
-      {["20% 30%", "80% 70%", "50% 90%"].map((pos, i) => (
-        <div key={i} style={{
-          position: "absolute", width: i === 2 ? "300px" : "400px", height: i === 2 ? "200px" : "300px",
-          background: "radial-gradient(circle, rgba(0,212,200,0.12) 0%, transparent 70%)",
-          top: pos.split(" ")[1], left: pos.split(" ")[0], transform: "translate(-50%,-50%)",
-          pointerEvents: "none", filter: "blur(40px)",
-        }} />
-      ))}
-
       <div style={{
-        position: "relative", width: "420px", padding: "50px 40px 40px",
-        background: "rgba(0,40,36,0.45)", backdropFilter: "blur(24px)",
-        border: "1px solid var(--glass-border)", borderRadius: "24px",
-        boxShadow: "0 0 60px rgba(0,212,200,0.08), inset 0 1px 0 rgba(0,212,200,0.15)",
+        width: "420px", padding: "44px 40px",
+        background: "#ffffff", border: "1.5px solid var(--border)",
+        borderRadius: "20px", boxShadow: "0 8px 40px rgba(0,0,0,0.06)",
       }}>
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+        <div style={{ textAlign: "center", marginBottom: "30px" }}>
           <h1 style={{
-            fontFamily: "'Orbitron', sans-serif", fontSize: "32px",
-            fontWeight: 900, letterSpacing: "0.25em",
-            color: "transparent", backgroundClip: "text", WebkitBackgroundClip: "text",
-            backgroundImage: "linear-gradient(135deg, #ffffff 0%, var(--teal) 100%)",
+            fontFamily: "'Poppins', sans-serif", fontSize: "30px",
+            fontWeight: 800, letterSpacing: "0.05em", color: "var(--ink)",
           }}>SPACE</h1>
-          <p style={{
-            color: "var(--muted)", fontSize: "13px", letterSpacing: "0.2em",
-            textTransform: "uppercase", marginTop: "4px"
-          }}>
-            {mode === "login" ? "Welcome Back" : "Create Account"}
+          <p style={{ color: "var(--muted)", fontSize: "13px", marginTop: "4px" }}>
+            {mode === "login" ? "Welcome back" : "Create your account"}
           </p>
         </div>
 
@@ -192,8 +175,8 @@ export default function Login() {
 
         {mode === "login" && (
           <p style={{
-            color: "var(--teal)", fontSize: "13px", textAlign: "right",
-            marginTop: "-10px", marginBottom: "24px", cursor: "pointer"
+            color: "var(--ink)", fontSize: "13px", textAlign: "right", fontWeight: 600,
+            marginTop: "-6px", marginBottom: "22px", cursor: "pointer", textDecoration: "underline",
           }}
             onClick={() => setShowForgot(true)}>
             Forgot Password?
@@ -202,55 +185,51 @@ export default function Login() {
 
         {serverMsg && (
           <div style={{
-            padding: "12px 16px", borderRadius: "10px", marginBottom: "20px", fontSize: "13px",
-            background: serverMsg.startsWith("✅") ? "rgba(0,212,200,0.1)" : "rgba(255,95,109,0.1)",
-            border: `1px solid ${serverMsg.startsWith("✅") ? "var(--teal)" : "var(--error)"}`,
-            color: serverMsg.startsWith("✅") ? "var(--teal)" : "var(--error)",
+            padding: "12px 16px", borderRadius: "10px", marginBottom: "18px", fontSize: "13px",
+            background: serverMsg.startsWith("✅") ? "rgba(45,157,110,0.08)" : "rgba(232,80,91,0.08)",
+            border: `1.5px solid ${serverMsg.startsWith("✅") ? "var(--success)" : "var(--error)"}`,
+            color: serverMsg.startsWith("✅") ? "var(--success)" : "var(--error)",
           }}>{serverMsg}</div>
         )}
 
         <button onClick={submit} disabled={loading} style={{
           width: "100%", padding: "15px", borderRadius: "12px", border: "none",
-          background: "linear-gradient(135deg, var(--teal) 0%, #007a74 100%)",
-          color: "#001a18", fontSize: "16px", fontWeight: 700,
-          fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.15em",
+          background: "var(--ink)", color: "#fff", fontSize: "15px", fontWeight: 700,
+          fontFamily: "'Poppins', sans-serif", letterSpacing: "0.04em",
           cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
-          transition: "transform 0.15s, box-shadow 0.15s",
-          boxShadow: "0 4px 24px rgba(0,212,200,0.3)",
+          transition: "transform 0.15s",
         }}
-          onMouseEnter={e => { e.target.style.transform = "translateY(-2px)"; e.target.style.boxShadow = "0 8px 32px rgba(0,212,200,0.45)"; }}
-          onMouseLeave={e => { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = "0 4px 24px rgba(0,212,200,0.3)"; }}>
+          onMouseEnter={e => e.target.style.transform = "translateY(-2px)"}
+          onMouseLeave={e => e.target.style.transform = "translateY(0)"}>
           {loading ? "..." : mode === "login" ? "LOGIN" : "REGISTER"}
         </button>
 
-        <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "14px", marginTop: "28px" }}>
+        <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "14px", marginTop: "24px" }}>
           {mode === "login" ? "New here? " : "Already have an account? "}
           <span onClick={() => { setMode(mode === "login" ? "register" : "login"); setServerMsg(""); setErrors({}); }}
-            style={{ color: "var(--teal)", fontWeight: 600, cursor: "pointer" }}>
+            style={{ color: "var(--ink)", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>
             {mode === "login" ? "Sign Up" : "Log In"}
           </span>
         </p>
       </div>
 
-      {/* Forgot Password Popup */}
       {showForgot && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+          background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)",
           display: "flex", alignItems: "center", justifyContent: "center",
           zIndex: 1000, padding: "20px",
         }}>
           <div style={{
-            width: "400px", maxWidth: "100%", padding: "36px 32px",
-            background: "rgba(0,40,36,0.95)", backdropFilter: "blur(24px)",
-            border: "1px solid var(--glass-border)", borderRadius: "20px",
-            boxShadow: "0 0 60px rgba(0,212,200,0.15)",
+            width: "400px", maxWidth: "100%", padding: "34px 32px",
+            background: "#fff", border: "1.5px solid var(--border)",
+            borderRadius: "18px", boxShadow: "0 10px 50px rgba(0,0,0,0.15)",
           }}>
             <h2 style={{
-              fontFamily: "'Orbitron', sans-serif", fontSize: "18px", fontWeight: 700,
-              color: "#fff", marginBottom: "6px", textAlign: "center", letterSpacing: "0.08em",
+              fontFamily: "'Poppins', sans-serif", fontSize: "18px", fontWeight: 700,
+              color: "var(--ink)", marginBottom: "6px", textAlign: "center",
             }}>RESET PASSWORD</h2>
-            <p style={{ color: "var(--muted)", fontSize: "12px", textAlign: "center", marginBottom: "24px" }}>
+            <p style={{ color: "var(--muted)", fontSize: "12px", textAlign: "center", marginBottom: "22px" }}>
               Enter your email and current password to set a new one
             </p>
 
@@ -269,19 +248,17 @@ export default function Login() {
             {resetMsg && (
               <div style={{
                 padding: "10px 14px", borderRadius: "10px", marginBottom: "16px", fontSize: "13px",
-                background: resetMsg.startsWith("✅") ? "rgba(0,212,200,0.1)" : "rgba(255,95,109,0.1)",
-                border: `1px solid ${resetMsg.startsWith("✅") ? "var(--teal)" : "var(--error)"}`,
-                color: resetMsg.startsWith("✅") ? "var(--teal)" : "var(--error)",
+                background: resetMsg.startsWith("✅") ? "rgba(45,157,110,0.08)" : "rgba(232,80,91,0.08)",
+                border: `1.5px solid ${resetMsg.startsWith("✅") ? "var(--success)" : "var(--error)"}`,
+                color: resetMsg.startsWith("✅") ? "var(--success)" : "var(--error)",
               }}>{resetMsg}</div>
             )}
 
             <button onClick={submitReset} disabled={resetLoading} style={{
               width: "100%", padding: "14px", borderRadius: "12px", border: "none",
-              background: "linear-gradient(135deg, var(--teal) 0%, #007a74 100%)",
-              color: "#001a18", fontSize: "14px", fontWeight: 700,
-              fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.12em",
-              cursor: resetLoading ? "not-allowed" : "pointer", opacity: resetLoading ? 0.7 : 1,
-              marginBottom: "10px",
+              background: "var(--ink)", color: "#fff", fontSize: "14px", fontWeight: 700,
+              fontFamily: "'Poppins', sans-serif", cursor: resetLoading ? "not-allowed" : "pointer",
+              opacity: resetLoading ? 0.7 : 1, marginBottom: "10px",
             }}>
               {resetLoading ? "..." : "UPDATE PASSWORD"}
             </button>
@@ -292,9 +269,9 @@ export default function Login() {
               setResetErrors({}); setResetMsg("");
             }} style={{
               width: "100%", padding: "12px", borderRadius: "12px",
-              border: "1px solid rgba(0,212,200,0.3)", background: "transparent",
-              color: "var(--teal)", fontSize: "13px", fontWeight: 700,
-              fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.12em", cursor: "pointer",
+              border: "1.5px solid var(--border)", background: "transparent",
+              color: "var(--ink)", fontSize: "13px", fontWeight: 700,
+              fontFamily: "'Poppins', sans-serif", cursor: "pointer",
             }}>
               CANCEL
             </button>

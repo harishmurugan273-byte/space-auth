@@ -5,12 +5,20 @@ import axios from "axios";
 
 const API = "http://localhost:5000/api/notes";
 
+const COLORS = ["#FFD37A", "#FF9466", "#B8A6FF", "#7FE0E8", "#D6E87A", "#FFB3C6", "#A8E6A1"];
+
+function colorFor(id) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % COLORS.length;
+  return COLORS[hash];
+}
+
 function formatDate(dateStr) {
-  if (!dateStr) return null;
+  if (!dateStr) return "Not saved yet";
   const d = new Date(dateStr);
   return d.toLocaleString("en-IN", {
     day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour: "2-digit", minute: "2-digit",
   });
 }
 
@@ -20,8 +28,9 @@ export default function Notes() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dirty, setDirty] = useState({});
-  // tracks which notes are currently unlocked for editing
   const [editing, setEditing] = useState({});
+  const [openNoteId, setOpenNoteId] = useState(null);
+  const [showTime, setShowTime] = useState(null); // noteId whose time tooltip is open
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -41,7 +50,7 @@ export default function Notes() {
   const addNote = async () => {
     const { data } = await axios.post(API, { userId: user._id, title: "", content: "" });
     setNotes([data.note, ...notes]);
-    // new note opens directly in edit mode
+    setOpenNoteId(data.note._id);
     setEditing(prev => ({ ...prev, [data.note._id]: true }));
   };
 
@@ -50,170 +59,216 @@ export default function Notes() {
     setDirty(prev => ({ ...prev, [id]: true }));
   };
 
-  const toggleEdit = (id) => {
-    setEditing(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleEdit = (id) => setEditing(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const openForEdit = (id) => {
+    setOpenNoteId(id);
+    setEditing(prev => ({ ...prev, [id]: true }));
   };
 
   const saveNote = async (note) => {
     if (!dirty[note._id]) {
-      // nothing changed, just lock it back
       setEditing(prev => ({ ...prev, [note._id]: false }));
+      setOpenNoteId(null);
       return;
     }
-
     const { data } = await axios.put(`${API}/${note._id}/save`, {
       title: note.title, content: note.content,
     });
     setNotes(notes.map(n => n._id === note._id ? data.note : n));
     setDirty(prev => ({ ...prev, [note._id]: false }));
-    setEditing(prev => ({ ...prev, [note._id]: false })); // lock again after saving
+    setEditing(prev => ({ ...prev, [note._id]: false }));
+    setOpenNoteId(null); // back to small card view
   };
 
   const deleteNote = async (id) => {
     await axios.delete(`${API}/${id}`);
     setNotes(notes.filter(n => n._id !== id));
+    setOpenNoteId(null);
   };
+
+  const closePopup = () => setOpenNoteId(null);
 
   if (!user) return null;
 
+  const openNote = notes.find(n => n._id === openNoteId);
+
   return (
-    <div style={{
-      minHeight: "100vh", padding: "50px 20px",
-      background: "radial-gradient(ellipse at 50% 0%, #003d3a 0%, #001a18 40%, #020c10 100%)",
-    }}>
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: "30px" }}>
-          <h1 style={{
-            fontFamily: "'Orbitron', sans-serif", fontSize: "26px", fontWeight: 900,
-            color: "transparent", backgroundClip: "text", WebkitBackgroundClip: "text",
-            backgroundImage: "linear-gradient(135deg, #ffffff 0%, var(--teal) 100%)",
-            letterSpacing: "0.1em",
-          }}>MY NOTES</h1>
-          <p style={{ color: "var(--muted)", fontSize: "13px", marginTop: "6px" }}>{user.username}'s workspace</p>
+    <div style={{ minHeight: "100vh", background: "#fafafa", padding: "40px 30px" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "30px" }}>
+          <div>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: "30px", fontWeight: 800, color: "var(--ink)" }}>
+              Notes
+            </h1>
+            <p style={{ color: "var(--muted)", fontSize: "13px", marginTop: "4px" }}>{user.username}'s workspace</p>
+          </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button onClick={() => navigate("/dashboard")} style={{
+              padding: "12px 22px", borderRadius: "10px",
+              border: "1.5px solid var(--border)", background: "#fff",
+              color: "var(--ink)", fontSize: "13px", fontWeight: 700,
+              fontFamily: "'Poppins', sans-serif", cursor: "pointer",
+            }}>← Back</button>
+            <button onClick={addNote} style={{
+              padding: "12px 26px", borderRadius: "10px", border: "none",
+              background: "var(--ink)", color: "#fff", fontSize: "13px", fontWeight: 700,
+              fontFamily: "'Poppins', sans-serif", cursor: "pointer",
+            }}>+ New Note</button>
+          </div>
         </div>
 
-        <button onClick={addNote} style={{
-          display: "block", margin: "0 auto 30px", padding: "14px 32px",
-          borderRadius: "12px", border: "none",
-          background: "linear-gradient(135deg, var(--teal) 0%, #007a74 100%)",
-          color: "#001a18", fontSize: "14px", fontWeight: 700,
-          fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.1em", cursor: "pointer",
+        {loading && <p style={{ color: "var(--muted)" }}>Loading notes...</p>}
+
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "22px",
         }}>
-          + NEW NOTE
-        </button>
+          {notes.map(note => (
+            <div key={note._id}
+              style={{
+                background: colorFor(note._id), borderRadius: "18px", padding: "22px",
+                height: "230px", display: "flex", flexDirection: "column",
+                justifyContent: "space-between", position: "relative",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.06)", transition: "transform 0.15s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = "translateY(-3px)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
 
-        {loading && <p style={{ color: "var(--muted)", textAlign: "center" }}>Loading notes...</p>}
-
-        <div style={{ display: "grid", gap: "20px" }}>
-          {notes.map(note => {
-            const hasUnsavedChanges = !!dirty[note._id];
-            const isEditing = !!editing[note._id];
-            const savedTime = formatDate(note.lastSavedAt);
-
-            return (
-              <div key={note._id} style={{
-                background: "rgba(0,40,36,0.45)", backdropFilter: "blur(20px)",
-                border: isEditing ? "1px solid var(--teal)" : "1px solid var(--glass-border)",
-                borderRadius: "16px", padding: "24px", transition: "border 0.2s",
+              {/* Top-right icon cluster */}
+              <div style={{
+                position: "absolute", top: "14px", right: "14px",
+                display: "flex", gap: "6px", zIndex: 2,
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-                  <input
-                    placeholder="Note title..."
-                    value={note.title}
-                    onChange={e => updateLocal(note._id, "title", e.target.value)}
-                    readOnly={!isEditing}
-                    style={{
-                      flex: 1, background: "transparent", border: "none",
-                      color: "#fff", fontSize: "18px", fontWeight: 700,
-                      outline: "none", fontFamily: "'Inter', sans-serif",
-                      cursor: isEditing ? "text" : "default",
-                    }}
-                  />
-                  <button
-                    onClick={() => toggleEdit(note._id)}
-                    title={isEditing ? "Stop editing" : "Edit this note"}
-                    style={{
-                      background: isEditing ? "rgba(0,212,200,0.15)" : "transparent",
-                      border: "1px solid rgba(0,212,200,0.3)", borderRadius: "8px",
-                      width: "34px", height: "34px", cursor: "pointer",
-                      fontSize: "15px", flexShrink: 0,
-                    }}>
-                    ✏️
-                  </button>
-                </div>
-
-                <textarea
-                  placeholder="Write your note here..."
-                  value={note.content}
-                  onChange={e => updateLocal(note._id, "content", e.target.value)}
-                  readOnly={!isEditing}
-                  rows={4}
-                  style={{
-                    width: "100%",
-                    background: isEditing ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.15)",
-                    border: "1px solid rgba(0,212,200,0.15)", borderRadius: "10px",
-                    color: isEditing ? "var(--text)" : "var(--muted)",
-                    fontSize: "14px", padding: "12px",
-                    outline: "none", resize: "vertical", fontFamily: "'Inter', sans-serif",
-                    cursor: isEditing ? "text" : "default",
-                  }}
-                />
-
-                <div style={{
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  marginTop: "14px", flexWrap: "wrap", gap: "8px",
-                }}>
-                  <p style={{
-                    color: hasUnsavedChanges ? "#ffb84d" : "var(--muted)",
-                    fontSize: "11.5px",
-                  }}>
-                    {hasUnsavedChanges
-                      ? "✏️ Edited — not saved yet"
-                      : savedTime
-                        ? `✏️ Last edited ${savedTime}`
-                        : "Not saved yet"}
-                  </p>
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    {isEditing && (
-                      <button onClick={() => saveNote(note)} style={{
-                        padding: "8px 18px", borderRadius: "8px", border: "none",
-                        background: "var(--teal)", color: "#001a18",
-                        fontWeight: 700, fontSize: "13px", cursor: "pointer",
-                      }}>
-                        ✓ Save
-                      </button>
-                    )}
-                    <button onClick={() => deleteNote(note._id)} style={{
-                      padding: "8px 18px", borderRadius: "8px",
-                      border: "1px solid var(--error)", background: "transparent",
-                      color: "var(--error)", fontWeight: 700, fontSize: "13px", cursor: "pointer",
-                    }}>
-                      ✕ Delete
-                    </button>
-                  </div>
-                </div>
+                <button onClick={() => setShowTime(showTime === note._id ? null : note._id)} title="Last edited time" style={{
+                  background: "rgba(255,255,255,0.55)", border: "none", borderRadius: "7px",
+                  width: "30px", height: "30px", cursor: "pointer", fontSize: "13px",
+                }}>🕐</button>
+                <button onClick={() => openForEdit(note._id)} title="Edit" style={{
+                  background: "rgba(255,255,255,0.55)", border: "none", borderRadius: "7px",
+                  width: "30px", height: "30px", cursor: "pointer", fontSize: "13px",
+                }}>✏️</button>
+                <button onClick={() => deleteNote(note._id)} title="Delete" style={{
+                  background: "rgba(255,255,255,0.55)", border: "none", borderRadius: "7px",
+                  width: "30px", height: "30px", cursor: "pointer", fontSize: "13px",
+                }}>🗑️</button>
               </div>
-            );
-          })}
+
+              {/* Time tooltip */}
+              {showTime === note._id && (
+                <div style={{
+                  position: "absolute", top: "50px", right: "14px",
+                  background: "rgba(255,255,255,0.95)", borderRadius: "8px",
+                  padding: "8px 12px", fontSize: "11px", color: "#333",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)", zIndex: 3, width: "170px",
+                }}>
+                  <p>📅 Created: {formatDate(note.createdAt)}</p>
+                  <p style={{ marginTop: "4px" }}>✏️ Last edited: {formatDate(note.lastSavedAt)}</p>
+                </div>
+              )}
+
+              {/* Body - click opens read-only popup */}
+              <div onClick={() => setOpenNoteId(note._id)} style={{ cursor: "pointer", overflow: "hidden", flex: 1, marginTop: "30px" }}>
+                <h3 style={{
+                  fontFamily: "'Poppins', sans-serif", fontSize: "17px", fontWeight: 700,
+                  color: "#222", marginBottom: "10px",
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }}>
+                  {note.title || "Untitled"}
+                </h3>
+                <p style={{
+                  fontSize: "13.5px", color: "#3a3a3a", lineHeight: "1.5",
+                  display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical", overflow: "hidden",
+                }}>
+                  {note.content || "Empty note..."}
+                </p>
+              </div>
+
+              <p style={{ fontSize: "11px", color: "rgba(0,0,0,0.5)", fontWeight: 600 }}>
+                {note.lastSavedAt ? "Saved" : "Draft"}
+              </p>
+            </div>
+          ))}
         </div>
 
         {!loading && notes.length === 0 && (
-          <p style={{ color: "var(--muted)", textAlign: "center", marginTop: "30px" }}>
-            No notes yet. Click "+ NEW NOTE" to create one.
+          <p style={{ color: "var(--muted)", textAlign: "center", marginTop: "60px" }}>
+            No notes yet. Click "+ New Note" to create one.
           </p>
         )}
-
-        <div style={{ textAlign: "center", marginTop: "30px" }}>
-          <button onClick={() => navigate("/dashboard")} style={{
-            padding: "12px 28px", borderRadius: "12px",
-            border: "1px solid rgba(0,212,200,0.3)", background: "transparent",
-            color: "var(--teal)", fontSize: "13px", fontWeight: 700,
-            fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.15em", cursor: "pointer",
-          }}>
-            ← BACK
-          </button>
-        </div>
       </div>
+
+      {/* Popup */}
+      {openNote && (
+        <div onClick={closePopup} style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.35)", backdropFilter: "blur(6px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1000, padding: "20px",
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: editing[openNote._id] ? "640px" : "480px",
+            maxWidth: "95%",
+            maxHeight: "80vh",
+            background: colorFor(openNote._id),
+            borderRadius: "20px", padding: "30px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+            display: "flex", flexDirection: "column",
+            transition: "width 0.2s ease",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+              <input
+                value={openNote.title}
+                onChange={e => updateLocal(openNote._id, "title", e.target.value)}
+                readOnly={!editing[openNote._id]}
+                placeholder="Title..."
+                style={{
+                  flex: 1, background: "transparent", border: "none", outline: "none",
+                  fontFamily: "'Poppins', sans-serif", fontSize: "20px", fontWeight: 700,
+                  color: "#222", cursor: editing[openNote._id] ? "text" : "default",
+                }}
+              />
+              <button onClick={() => toggleEdit(openNote._id)} title="Edit" style={{
+                background: editing[openNote._id] ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.5)",
+                border: "none", borderRadius: "8px",
+                width: "34px", height: "34px", cursor: "pointer", fontSize: "15px", flexShrink: 0,
+              }}>✏️</button>
+              <button onClick={closePopup} style={{
+                background: "rgba(255,255,255,0.5)", border: "none", borderRadius: "8px",
+                width: "34px", height: "34px", cursor: "pointer", fontSize: "15px", flexShrink: 0,
+              }}>✕</button>
+            </div>
+
+            <textarea
+              value={openNote.content}
+              onChange={e => updateLocal(openNote._id, "content", e.target.value)}
+              readOnly={!editing[openNote._id]}
+              placeholder="Write your note..."
+              style={{
+                flex: 1, minHeight: editing[openNote._id] ? "280px" : "140px",
+                background: "rgba(255,255,255,0.4)", border: "none", borderRadius: "12px",
+                padding: "16px", fontSize: "14px", color: "#222", outline: "none",
+                resize: "none", overflowY: "auto", fontFamily: "'Inter', sans-serif",
+                cursor: editing[openNote._id] ? "text" : "default", lineHeight: "1.6",
+                transition: "min-height 0.2s ease",
+              }}
+            />
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "16px" }}>
+              {editing[openNote._id] && (
+                <button onClick={() => saveNote(openNote)} style={{
+                  padding: "10px 22px", borderRadius: "10px", border: "none",
+                  background: "#222", color: "#fff", fontWeight: 700, fontSize: "13px", cursor: "pointer",
+                }}>✓ Save</button>
+              )}
+              <button onClick={() => deleteNote(openNote._id)} style={{
+                padding: "10px 22px", borderRadius: "10px",
+                border: "1.5px solid rgba(0,0,0,0.3)", background: "transparent",
+                color: "#222", fontWeight: 700, fontSize: "13px", cursor: "pointer",
+              }}>✕ Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

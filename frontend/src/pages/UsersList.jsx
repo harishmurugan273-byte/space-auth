@@ -24,29 +24,20 @@ export default function UsersList() {
   }, [navigate]);
 
   return (
-    <div style={{
-      minHeight: "100vh", padding: "50px 20px",
-      background: "radial-gradient(ellipse at 50% 0%, #003d3a 0%, #001a18 40%, #020c10 100%)",
-      position: "relative",
-    }}>
-      <div style={{ maxWidth: "700px", margin: "0 auto", position: "relative" }}>
-        <div style={{ textAlign: "center", marginBottom: "36px" }}>
-          <h1 style={{
-            fontFamily: "'Orbitron', sans-serif", fontSize: "26px", fontWeight: 900,
-            color: "transparent", backgroundClip: "text", WebkitBackgroundClip: "text",
-            backgroundImage: "linear-gradient(135deg, #ffffff 0%, var(--teal) 100%)",
-            letterSpacing: "0.1em",
-          }}>ALL USERS</h1>
-          <p style={{ color: "var(--muted)", fontSize: "12px", marginTop: "10px" }}>
+    <div style={{ minHeight: "100vh", background: "#fafafa", padding: "50px 20px" }}>
+      <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: "30px" }}>
+          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: "26px", fontWeight: 800, color: "var(--ink)" }}>
+            All Users
+          </h1>
+          <p style={{ color: "var(--muted)", fontSize: "12px", marginTop: "8px" }}>
             Click any user to view their notes
           </p>
         </div>
 
         <div style={{
-          background: "rgba(0,40,36,0.45)", backdropFilter: "blur(24px)",
-          border: "1px solid var(--glass-border)", borderRadius: "20px",
-          boxShadow: "0 0 60px rgba(0,212,200,0.08), inset 0 1px 0 rgba(0,212,200,0.15)",
-          overflow: "hidden",
+          background: "#fff", border: "1.5px solid var(--border)",
+          borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
         }}>
           {loading && <p style={{ color: "var(--muted)", textAlign: "center", padding: "40px" }}>Loading users…</p>}
           {error && <p style={{ color: "var(--error)", textAlign: "center", padding: "40px" }}>{error}</p>}
@@ -57,15 +48,15 @@ export default function UsersList() {
               style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "18px 24px", cursor: "pointer", transition: "background 0.2s",
-                borderBottom: i !== users.length - 1 ? "1px solid rgba(0,212,200,0.08)" : "none",
+                borderBottom: i !== users.length - 1 ? "1px solid var(--border)" : "none",
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(0,212,200,0.08)"}
+              onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
               <div>
-                <p style={{ color: "#fff", fontWeight: 600, fontSize: "15px" }}>{u.username}</p>
+                <p style={{ color: "var(--ink)", fontWeight: 700, fontSize: "15px" }}>{u.username}</p>
                 <p style={{ color: "var(--muted)", fontSize: "13px", marginTop: "2px" }}>{u.email}</p>
               </div>
-              <span style={{ color: "var(--teal)", fontSize: "13px" }}>View notes →</span>
+              <span style={{ color: "var(--ink)", fontSize: "13px", fontWeight: 600 }}>View notes →</span>
             </div>
           ))}
 
@@ -74,14 +65,14 @@ export default function UsersList() {
           )}
         </div>
 
-        <div style={{ textAlign: "center", marginTop: "24px" }}>
+        <div style={{ textAlign: "center", marginTop: "20px" }}>
           <button onClick={() => navigate("/dashboard")} style={{
-            padding: "12px 28px", borderRadius: "12px",
-            border: "1px solid rgba(0,212,200,0.3)", background: "transparent",
-            color: "var(--teal)", fontSize: "13px", fontWeight: 700,
-            fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.15em", cursor: "pointer",
+            padding: "12px 28px", borderRadius: "10px",
+            border: "1.5px solid var(--border)", background: "#fff",
+            color: "var(--ink)", fontSize: "13px", fontWeight: 700,
+            fontFamily: "'Poppins', sans-serif", cursor: "pointer",
           }}>
-            ← BACK
+            ← Back
           </button>
         </div>
       </div>
