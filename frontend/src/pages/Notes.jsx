@@ -30,7 +30,8 @@ export default function Notes() {
   const [dirty, setDirty] = useState({});
   const [editing, setEditing] = useState({});
   const [openNoteId, setOpenNoteId] = useState(null);
-  const [showTime, setShowTime] = useState(null); // noteId whose time tooltip is open
+  const [showTime, setShowTime] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null); // note pending delete confirmation
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -78,14 +79,21 @@ export default function Notes() {
     setNotes(notes.map(n => n._id === note._id ? data.note : n));
     setDirty(prev => ({ ...prev, [note._id]: false }));
     setEditing(prev => ({ ...prev, [note._id]: false }));
-    setOpenNoteId(null); // back to small card view
-  };
-
-  const deleteNote = async (id) => {
-    await axios.delete(`${API}/${id}`);
-    setNotes(notes.filter(n => n._id !== id));
     setOpenNoteId(null);
   };
+
+  // Step 1: just opens the confirmation popup, doesn't delete yet
+  const askDelete = (id) => setConfirmDeleteId(id);
+
+  // Step 2: actually deletes, only called after user clicks "Delete" in the popup
+  const confirmDelete = async () => {
+    await axios.delete(`${API}/${confirmDeleteId}`);
+    setNotes(notes.filter(n => n._id !== confirmDeleteId));
+    setOpenNoteId(null);
+    setConfirmDeleteId(null);
+  };
+
+  const cancelDelete = () => setConfirmDeleteId(null);
 
   const closePopup = () => setOpenNoteId(null);
 
@@ -134,7 +142,6 @@ export default function Notes() {
               onMouseEnter={e => e.currentTarget.style.transform = "translateY(-3px)"}
               onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
 
-              {/* Top-right icon cluster */}
               <div style={{
                 position: "absolute", top: "14px", right: "14px",
                 display: "flex", gap: "6px", zIndex: 2,
@@ -147,13 +154,12 @@ export default function Notes() {
                   background: "rgba(255,255,255,0.55)", border: "none", borderRadius: "7px",
                   width: "30px", height: "30px", cursor: "pointer", fontSize: "13px",
                 }}>✏️</button>
-                <button onClick={() => deleteNote(note._id)} title="Delete" style={{
+                <button onClick={() => askDelete(note._id)} title="Delete" style={{
                   background: "rgba(255,255,255,0.55)", border: "none", borderRadius: "7px",
                   width: "30px", height: "30px", cursor: "pointer", fontSize: "13px",
                 }}>🗑️</button>
               </div>
 
-              {/* Time tooltip */}
               {showTime === note._id && (
                 <div style={{
                   position: "absolute", top: "50px", right: "14px",
@@ -166,7 +172,6 @@ export default function Notes() {
                 </div>
               )}
 
-              {/* Body - click opens read-only popup */}
               <div onClick={() => setOpenNoteId(note._id)} style={{ cursor: "pointer", overflow: "hidden", flex: 1, marginTop: "30px" }}>
                 <h3 style={{
                   fontFamily: "'Poppins', sans-serif", fontSize: "17px", fontWeight: 700,
@@ -177,6 +182,7 @@ export default function Notes() {
                 </h3>
                 <p style={{
                   fontSize: "13.5px", color: "#3a3a3a", lineHeight: "1.5",
+                  whiteSpace: "pre-wrap",
                   display: "-webkit-box", WebkitLineClamp: 5, WebkitBoxOrient: "vertical", overflow: "hidden",
                 }}>
                   {note.content || "Empty note..."}
@@ -197,7 +203,7 @@ export default function Notes() {
         )}
       </div>
 
-      {/* Popup */}
+      {/* Note popup */}
       {openNote && (
         <div onClick={closePopup} style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
@@ -260,11 +266,43 @@ export default function Notes() {
                   background: "#222", color: "#fff", fontWeight: 700, fontSize: "13px", cursor: "pointer",
                 }}>✓ Save</button>
               )}
-              <button onClick={() => deleteNote(openNote._id)} style={{
+              <button onClick={() => askDelete(openNote._id)} style={{
                 padding: "10px 22px", borderRadius: "10px",
                 border: "1.5px solid rgba(0,0,0,0.3)", background: "transparent",
                 color: "#222", fontWeight: 700, fontSize: "13px", cursor: "pointer",
               }}>✕ Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation popup */}
+      {confirmDeleteId && (
+        <div onClick={cancelDelete} style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1100, padding: "20px",
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: "320px", background: "#fff", borderRadius: "16px",
+            padding: "28px 24px", textAlign: "center",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+          }}>
+            <p style={{
+              fontFamily: "'Poppins', sans-serif", fontSize: "17px", fontWeight: 700,
+              color: "#222", marginBottom: "20px",
+            }}>Delete this note?</p>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={cancelDelete} style={{
+                flex: 1, padding: "12px", borderRadius: "10px",
+                border: "1.5px solid var(--border)", background: "#fff",
+                color: "var(--ink)", fontWeight: 700, fontSize: "13px", cursor: "pointer",
+              }}>Cancel</button>
+              <button onClick={confirmDelete} style={{
+                flex: 1, padding: "12px", borderRadius: "10px", border: "none",
+                background: "#e8505b", color: "#fff", fontWeight: 700, fontSize: "13px", cursor: "pointer",
+              }}>Delete</button>
             </div>
           </div>
         </div>
